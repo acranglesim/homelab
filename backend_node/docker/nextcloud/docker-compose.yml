@@ -20,7 +20,7 @@ services:
     image: redis:alpine
     container_name: redis
     volumes:
-      - /docker/nextcloud/redis:/data
+      - /path/to/redis/data:/data
     restart: unless-stopped
 
   app:

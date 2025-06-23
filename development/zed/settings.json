@@ -25,5 +25,12 @@
     "PHP": {
       "language_servers": ["intelephense", "..."]
     }
-  }
+  },
+  "terminal": {
+      "font_family": "Roboto Mono for Powerline",
+      "font_features": {
+        "calt": true,
+        "salt": true
+      }
+    }
 }

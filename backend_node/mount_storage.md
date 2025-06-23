@@ -1,7 +1,8 @@
 ## Copy these manually to mount the usb attached storage
-1. Find the UUID of the storage device
+1. Format the storage device to ext4 
+2. Find the UUID of the storage device
     1. `blkid`
-2. Grab uuid
+3. Grab uuid
     1. Edit /etc/fstab
     2. `nano /etc/fstab`
     3. Append mount command

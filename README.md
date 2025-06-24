@@ -8,4 +8,5 @@ Here's a list of managed software for my homelab
 2. Gitea - Repo Mirror For Backups
 3. Kavita - Comic Book & Manga
 4. Nextcloud - Cloud File Share
-5. Tailscale - Home Network Access
+5. Paperless-ngx - Paper To Digital Filing
+6. Tailscale - Home Network Access

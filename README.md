@@ -10,3 +10,4 @@ Here's a list of managed software for my homelab
 4. Nextcloud - Cloud File Share
 5. Paperless-ngx - Paper To Digital Filing
 6. Tailscale - Home Network Access
+7. Pi-hole - Network DNS filtering

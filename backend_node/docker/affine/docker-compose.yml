@@ -1,64 +1,72 @@
+name: affine
 services:
   affine:
-    image: ghcr.io/toeverything/affine-graphql:stable
-    container_name: affine_selfhosted
-    command:
-      ['sh', '-c', 'node ./scripts/self-host-predeploy && node ./dist/main.js']
+    image: ghcr.io/toeverything/affine:stable
+    container_name: affine_server
     ports:
       - '3010:3010'
-      - '5555:5555'
     depends_on:
       redis:
         condition: service_healthy
       postgres:
         condition: service_healthy
+      affine_migration:
+        condition: service_completed_successfully
     volumes:
       # custom configurations
       - /path/to/affine/config:/root/.affine/config
-      # blob storage
-      - ~/path/to/affine/storage:/root/.affine/storage
-    logging:
-      driver: 'json-file'
-      options:
-        max-size: '1000m'
-    restart: unless-stopped
+      - /path/to/affine/storage:/root/.affine/storage
     environment:
-      #- NODE_OPTIONS="--import=./scripts/register.js"
-      - AFFINE_CONFIG_PATH=/root/.affine/config
       - REDIS_SERVER_HOST=redis
-      - DATABASE_URL=postgres://affine:affine@postgres:5432/affine
-      - NODE_ENV=production
-      - AFFINE_ADMIN_EMAIL=[email]
-      - AFFINE_ADMIN_PASSWORD=[password]
-      - AFFINE_SERVER_HOST=[domain]
-      - AFFINE_SERVER_HTTPS=true
-      # Telemetry allows us to collect data on how you use the affine. This data will helps us improve the app and provide better features.
-      # Uncomment next line if you wish to quit telemetry.
-      # - TELEMETRY_ENABLE=false
+      - DATABASE_URL=postgresql://affine_user:affine_user_password@postgres:5432/affine
+      - AFFINE_INDEXER_ENABLED=false
+    restart: unless-stopped
+
+  affine_migration:
+    image: ghcr.io/toeverything/affine:stable
+    container_name: affine_migration_job
+    volumes:
+      # custom configurations
+      - /path/to/affine/config:/root/.affine/config
+      - /path/to/affine/storage:/root/.affine/storage
+    command: ['sh', '-c', 'node ./scripts/self-host-predeploy.js']
+    environment:
+      - REDIS_SERVER_HOST=redis
+      - DATABASE_URL=postgresql://affine_user:affine_user_password@postgres:5432/affine
+      - AFFINE_INDEXER_ENABLED=false
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
   redis:
     image: redis
     container_name: affine_redis
-    restart: unless-stopped
-    volumes:
-      - /path/to/affine/redis:/data
     healthcheck:
       test: ['CMD', 'redis-cli', '--raw', 'incr', 'ping']
       interval: 10s
       timeout: 5s
       retries: 5
-  postgres:
-    image: postgres
-    container_name: affine_postgres
     restart: unless-stopped
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: affine_postgres
     volumes:
       - /path/to/affine/postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: affine_user
+      POSTGRES_PASSWORD: affine_user_password
+      POSTGRES_DB: affine
+      POSTGRES_INITDB_ARGS: '--data-checksums'
+      # you better set a password for you database
+      # or you may add 'POSTGRES_HOST_AUTH_METHOD=trust' to ignore postgres security policy
+      # POSTGRES_HOST_AUTH_METHOD: trust
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U affine']
+      test:
+        ['CMD', 'pg_isready', '-U', "affine_user", '-d', "affine"]
       interval: 10s
       timeout: 5s
       retries: 5
-    environment:
-      POSTGRES_USER: affine
-      POSTGRES_PASSWORD: affine
-      POSTGRES_DB: affine
-      PGDATA: /var/lib/postgresql/data/pgdata
+    restart: unless-stopped
